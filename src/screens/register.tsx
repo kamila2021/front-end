@@ -5,6 +5,7 @@ import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
+import DateInput from './dateInput';
 
 type FormDataT = {
   name: string;
@@ -125,9 +126,13 @@ const Register = () => {
             variant="outline"
             placeholder="Fecha de nacimiento"
             value={data?.birthdate}
-            onChange={(e) =>
-              setValue('birthdate', e?.nativeEvent?.text as string)
-            }
+            onChange={(e) => {
+              const value = String(e?.nativeEvent?.text);
+              const formattedValue = value
+                .replace(/-/g, '')
+                .replace(/(\d{4})(\d{1,2})(\d{1,2})/, '$1-$2-$3');
+              setValue('birthdate', formattedValue);
+            }}
           />
         </Center>
         <Center>
@@ -147,5 +152,6 @@ const Register = () => {
     </Box>
   );
 };
+
 
 export default Register;

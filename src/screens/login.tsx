@@ -9,8 +9,8 @@ import 'text-encoding-polyfill';
 import Joi from 'joi';
 
 const loginSchema = Joi.object({
-  user: Joi.string().min(1).max(10),
-  password: Joi.string().min(1).max(10),
+  user: Joi.string().email({ tlds: { allow: false } }).required(),
+  password: Joi.string().min(1).max(50).required(),
 });
 
 const Login = () => {
@@ -24,20 +24,20 @@ const Login = () => {
   const [errorMessagePassword, setErrorMessagePassword] = useState<string>('');
 
   useEffect(() => {
-    const errors = loginSchema.validate({ user, password });
-    console.log(password);
-    console.log(errors?.error?.details[0]?.context?.key);
+    const errors = loginSchema.validate({ user, password }, { abortEarly: false });
 
-    // if (errors?.error?.details[0]?.context?.key === 'user') {
-    //   setErrorMessageUser(errors?.error?.details[0]?.message);
-    //   return;
-    // } else if (errors?.error?.details[0]?.context?.key === 'password') {
-    //   setErrorMessagePassword(errors?.error?.details[0]?.message);
-    //   return;
-    // }
-
-    // setErrorMessageUser('');
-    // setErrorMessagePassword('');
+    if (errors.error) {
+      errors.error.details.forEach(detail => {
+        if (detail.context && detail.context.key === 'user') {
+          setErrorMessageUser(detail.message);
+        } else if (detail.context && detail.context.key === 'password') {
+          setErrorMessagePassword(detail.message);
+        }
+      });
+    } else {
+      setErrorMessageUser('');
+      setErrorMessagePassword('');
+    }
   }, [user, password]);
 
   const onLogin = async () => {

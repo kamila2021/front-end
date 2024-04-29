@@ -10,6 +10,7 @@ import Joi from 'joi';
 
 const loginSchema = Joi.object({
   user: Joi.string().email({ tlds: { allow: false } }).required(),
+  password: Joi.string().min(1).max(50).required(),
 });
 
 const recuperarContra = () => {
