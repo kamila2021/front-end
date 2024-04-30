@@ -14,6 +14,9 @@ const loginSchema = Joi.object({
 });
 
 const recuperarContra = () => {
+  const [ code, setCode ] = useState<string>('');
+  const [ newPassword, setNewPassword ] = useState<string>('');
+  const [ confirmPassword, setConfirmPassword ] = useState<string>('');
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { setUser: setUserStore } = useStore();
@@ -21,6 +24,7 @@ const recuperarContra = () => {
   const [user, setUser] = useState<string>('');
   const [errorMessageUser, setErrorMessageUser] = useState<string>('');
   const [randomNumber, setRandomNumber] = useState<number>(0);
+  const [ error, setError ] = useState<string>('');
 
   useEffect(() => {
     const errors = loginSchema.validate({ user });
@@ -45,6 +49,41 @@ const recuperarContra = () => {
       navigation.navigate('Home');
     }, 3000);
   };
+
+  const handleSubmit = async () => {
+    if (code == '' || newPassword == '' || confirmPassword == '' || user == undefined) return null;
+    if (newPassword != confirmPassword) return null;
+    if (code.length != 6) return null;
+    setLoading(true);
+    try{
+      const changePassword = await fetch(`${process.env.MS_USERS_URL}/auth/change-password`,{
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: user,
+          code: code,
+          password: newPassword,
+        })
+      })
+      if (changePassword.ok){
+        setError('');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login'}]
+        });
+      }
+      else{
+        console.log(error);
+        const response = await changePassword.json();
+        setError(response.error);
+      }
+    } catch (error){
+      setError('Server error')
+    }
+    setLoading(false);
+  }
 
   return (
     <View
