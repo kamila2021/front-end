@@ -1,21 +1,51 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
-
 import { useNavigation } from '@react-navigation/native';
 import 'text-encoding-polyfill';
 import Joi from 'joi';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../Router';
+
+
 const cambiarContraSchema = Joi.object({
   email: Joi.string().email({ tlds: { allow: false } }).required(),
   newPassword: Joi.string().min(1).required(),
 });
 
 const CambiarContra = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [email, setEmail] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [errorMessageEmail, setErrorMessageEmail] = useState<string>('');
   const [errorMessageNewPassword, setErrorMessageNewPassword] = useState<string>('');
+  const [ loading, setLoading ] = useState<boolean>(false);
+  
+  const handleSubmit = async () => {
+    if (email == '') return null;
+    setLoading(true);
+    try{
+      const loginFetch = await fetch(`${process.env.MS_USERS_URL}/auth/forgot-password`,{
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+        })
+      })
+      if (loginFetch.ok) {
+        setErrorMessageEmail('');
+        navigation.navigate('CambiarContra', { email });
+      } else {
+        const response = await loginFetch.json();
+        setErrorMessageEmail(response.error);
+      }
+    } catch (error){
+      setErrorMessageEmail('Connection error')
+    }
+    setLoading(false);
+  }
 
   const onChangeEmail = (value: string) => {
     setEmail(value);
