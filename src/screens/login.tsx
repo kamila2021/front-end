@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import 'text-encoding-polyfill';
 import Joi from 'joi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const loginSchema = Joi.object({
   user: Joi.string().email({ tlds: { allow: false } }).required(),
@@ -22,7 +23,38 @@ const Login = () => {
   const [errorMessageUser, setErrorMessageUser] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [errorMessagePassword, setErrorMessagePassword] = useState<string>('');
+  const [ messageColor, setMessageColor] = useState<'red' | 'green' | 'black'>('black');
 
+  const handleLogin = async () => {
+    if (user == '' || password == '') return null;
+    setLoading(true);
+    /// try catch if backend is down
+    const loginFetch = await fetch(`${process.env.MS_USERS_URL}/auth/login`,{
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user: user,
+        password: password,
+      })
+    })
+    
+
+    if (loginFetch.status == 201){
+      const data = await loginFetch.json();
+      setMessageColor('green');
+      await AsyncStorage.setItem('token', data.token);
+      setErrorMessageUser(`OK! ${await AsyncStorage.getItem('token')}`)
+    }
+    else{
+      const data = await loginFetch.json();
+      setMessageColor('red');
+      setErrorMessageUser(data.message);
+    }
+    setLoading(false);
+  }
+  
   useEffect(() => {
     const errors = loginSchema.validate({ user, password }, { abortEarly: false });
 
