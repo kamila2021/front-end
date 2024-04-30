@@ -1,11 +1,13 @@
 import { Box, Button, Center, Input, Text, VStack } from 'native-base';
-import { useRef, useState } from 'react';
+import { useEffect,useRef, useState } from 'react';
 import registerService from '../services/register.services';
 import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import DateInput from './dateInput';
+import validator from 'validator';
+
 
 type FormDataT = {
   name: string;
@@ -24,13 +26,34 @@ const InitData = {
 };
 
 const Register = () => {
+  const [ fullName, setFullName ] = useState<string>('');
   const [data, setData] = useState<FormDataT>(InitData);
   const [alert, setAlert] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const cancelRef = useRef(null);
+  const [ password, setPassword ] = useState<string>('');
+  const [ confirmPassword, setConfirmPassword ] = useState<string>('');
+  const [ passwordColor, setPasswordColor ] = useState<'gray' | 'red'>('gray')
+  
+  const [ birthday, setBirthday ] = useState<Date | undefined>(undefined);
+  const [ showDateTimePicker, setShowDateTimePicker ] = useState<boolean>(false);
+  
+  const [ messageColor, setMessageColor] = useState<'red' | 'green' | 'black'>('black');
+
+  const [user, setUser] = useState<string>('');
+  const [errorMessageUser, setErrorMessageUser] = useState<string>('');
+  
+
+  useEffect(() => {
+    if (password != confirmPassword) {
+      setPasswordColor('red');
+    }
+    else{
+      setPasswordColor('gray');
+    }
+  }, [password, confirmPassword])
 
   const setValue = (key: string, value: string) => {
     setData((prevState) => {
@@ -54,6 +77,35 @@ const Register = () => {
       navigation.navigate('Home');
     }
   };
+  const handleRegister = async () => {
+    if (user == '' || password == '' || confirmPassword == '' || birthday == undefined) return null;
+    if (!validator.isEmail(user)) return null;
+    if (password != confirmPassword) return null;
+    setLoading(true);
+    /// try catch if backend is down
+    const registerReq = await fetch(`${process.env.MS_USERS_URL}/auth/register`,{
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: fullName,
+        birthday: birthday.toISOString(),
+        email: user,
+        password: password,
+      })
+    })
+    if (registerReq.status == 201){
+      setMessage('')
+      navigation.navigate('Login')
+    }
+    else{
+      const data = await registerReq.json();
+      setMessageColor('red');
+      setMessage(data.message);
+    }
+    setLoading(false);
+} 
 
   return (
     <Box
