@@ -1,80 +1,83 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import COLORS from '../constants/colors';
 import Button from '../components/Button';
 
 const ForgotPassword = ({ navigation }: { navigation: any }) => {
-    const [email, setEmail] = useState<string>('');
-    const [loading, setLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [ error, setError ] = useState<string>('');
 
-    const validateEmail = (text: string) => {
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return regex.test(text) && text.trim().length > 0;
-    };
 
-    const handleResetPassword = async () => {
-        if (!validateEmail(email)) {
-            Alert.alert('Error', 'Ingrese un correo electrónico válido');
-            return;
-        }
-        setLoading(true);
-        
-        try {
-            const ForgotPasswordFetch = await fetch('http://10.115.75.137:3000/user/reset-password', {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email: email,
-                })
-            });
+  const validateEmail = (text: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(text) && text.trim().length > 0;
+  };
 
-            if (ForgotPasswordFetch.status == 200) {
-                Alert.alert('Cambiar contraseña', `Se ha enviado un correo de restablecimiento de contraseña a ${email}`);
-            } else {
-                const data = await ForgotPasswordFetch.json();
-                Alert.alert('Error', data.message);
-            }
-        } catch (error) {
-            console.error('Error al realizar el restablecimiento de contraseña:', error);
-            Alert.alert('Error', 'Ocurrió un error al restablecer la contraseña. Por favor, intenta de nuevo más tarde');
-        }
+  const handleForgotPassword = async () => {
+    if (!validateEmail(email)) {
+      Alert.alert('Error', 'Ingrese un correo electrónico válido');
+      return;
+    }
+    setLoading(true);
+    
+    try {
+      const forgotFetch  = await fetch('http://192.168.0.17:3000/user/request-reset-password', {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+        })
+      })
+      if (forgotFetch.ok){
+        setError('')
+        navigation.navigate('ResetPassword', {email: email})
+      }
+      else if (forgotFetch.status === 500) {
+        Alert.alert('Usuario no registrado');
+      }
+      else{
+        const response = await forgotFetch.json();
+        setError(response.error);
+      }
+    } catch (error){
+      setError('Connection error')
+    }
+    setLoading(false);
+  }
 
-        setLoading(false);
-    };
 
-    return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-            <View style={{ flex: 1, marginHorizontal: 22, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 22, fontWeight: 'bold', marginVertical: 12, color: COLORS.black }}>
-                    Recupera tu cuenta
-                </Text>
-                <Text style={{ fontSize: 16, color: COLORS.black }}>
-                    Por favor ingresa tu email para enviar un código.
-                </Text>
-                <View style={{ marginTop: 20 }}>
-                    <Text>Correo</Text>
-                    <TextInput
-                        placeholder='Ingresa tu Email'
-                        placeholderTextColor={COLORS.black}
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType='email-address'
-                        style={{ width: '100%', height: 48, borderColor: COLORS.black, borderWidth: 1, borderRadius: 8, paddingLeft: 22 }}
-                    />
-                </View>
-                <Button
-                    title="Cambiar contraseña"
-                    onPress={handleResetPassword}
-                    filled
-                    style={{
-                        marginTop: 18,
-                        marginBottom: 4,
-                    }}
-                />
-                <TouchableOpacity
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+      <View style={{ flex: 0.2, marginHorizontal: 50, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 28, fontWeight: 'bold', marginVertical: 40, color: COLORS.black }}>
+                        Olvide mi contraseña!
+                    </Text>
+                    </View>
+      <View style={{ flex: 0.5, marginHorizontal: 22, justifyContent: 'center' }}>
+        <Text style={{ fontSize: 20, color: COLORS.black }}>
+          Ingresa tu correo electrónico para restablecer tu contraseña.
+        </Text>
+        <View style={{ marginTop: 40 }}>
+          <Text>Email</Text>
+          <TextInput
+            placeholder='Ingresa tu correo'
+            placeholderTextColor={COLORS.black}
+            value={email}
+            onChangeText={setEmail}
+            style={{ width: '100%', height: 50, borderColor: COLORS.black, borderWidth: 1, borderRadius: 8, paddingLeft: 22 }}
+          />
+        </View>
+        <Button
+          title="Solicitar restablecimiento"
+          onPress={handleForgotPassword}
+          filled
+          style={{ marginTop: 30, marginBottom: 4 }}
+        />
+    <TouchableOpacity
                     onPress={() => navigation.navigate('Login')}
                     style={{
                         alignItems: 'center',
@@ -82,14 +85,15 @@ const ForgotPassword = ({ navigation }: { navigation: any }) => {
                         backgroundColor: COLORS.lightGray,
                         paddingVertical: 12,
                         borderRadius: 8,
-                        marginTop: 10,
+                        marginTop: 20,
                     }}
                 >
                     <Text style={{ fontSize: 16, color: COLORS.primary }}>Volver a login</Text>
                 </TouchableOpacity>
-            </View>
-        </SafeAreaView>
-    );
+        {loading && <ActivityIndicator size="large" color={COLORS.primary} />}
+      </View>
+    </SafeAreaView>
+  );
 };
 
 export default ForgotPassword;

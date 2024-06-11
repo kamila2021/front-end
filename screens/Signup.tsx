@@ -79,11 +79,11 @@ const Signup = ({ navigation }: Props) => {
             Alert.alert('Error', 'Seleccione su fecha de nacimiento');
             return;
         }
-
+    
         setLoading(true);
-
+    
         try {
-            const registerReq = await fetch(`http://10.115.75.137:3000/user`, {
+            const registerReq = await fetch(`http://192.168.0.17:3000/user`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -97,23 +97,27 @@ const Signup = ({ navigation }: Props) => {
                     isAdmin: role,
                 })
             });
-
+    
             if (registerReq.status === 201) {
+                console.log("si funciono")
                 setMessage('');
                 navigation.navigate('Login');
             } else {
+                console.log("1")
                 const data = await registerReq.json();
                 setMessageColor('red');
                 setMessage(data.message);
             }
         } catch (error) {
+            console.log("2")
             console.error('Error:', error);
             setMessageColor('red');
             setMessage('Error de servidor');
         } finally {
             setLoading(false);
         }
-    };
+    };   
+                       
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -175,35 +179,44 @@ const Signup = ({ navigation }: Props) => {
                     </View>
                 </View>
                 <View style={{ marginBottom: 12 }}>
-                    <Text>Rol</Text>
-                    <TouchableOpacity
-                        onPress={() => setRole('0')}
-                        style={{
-                            backgroundColor: role === 'Trabajador' ? COLORS.blue : COLORS.lightGray,
-                            paddingVertical: 12,
-                            borderRadius: 8,
-                            marginTop: 10,
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Text style={{ color: role === 'Trabajador' ? COLORS.white : COLORS.black }}>Trabajador</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => setRole('1')}
-                        style={{
-                            backgroundColor: role === 'Administrador' ? COLORS.blue : COLORS.lightGray,
-                            paddingVertical: 12,
-                            borderRadius: 8,
-                            marginTop: 10,
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Text style={{ color: role === 'Administrador' ? COLORS.white : COLORS.black }}>Administrador</Text>
-                    </TouchableOpacity>
+                    <Text>Selecciona tu rol</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <TouchableOpacity
+                             onPress={() => setRole('0')}
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: role === 'Trabajador' ? COLORS.blue : COLORS.primary,
+                                paddingVertical: 12,
+                                borderRadius: 8,
+                                marginRight: 10,
+                            }}
+                        >
+                            <Text style={{ color: role === 'Trabajador' ? COLORS.white : COLORS.white }}>Trabajador</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                             onPress={() => setRole('1')}
+                            style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: role === 'Administrador' ? COLORS.blue : COLORS.primary,
+                                paddingVertical: 12,
+                                borderRadius: 8,
+                            }}
+                        >
+                            <Text style={{ color: role === 'Administrador' ? COLORS.white : COLORS.white }}>Administrador</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
+
+
+
                 <View style={{ marginVertical: 10 }}>
                     <TouchableOpacity onPress={handleDateOfBirthPress}>
-                        <Text>{birthday ? birthday.toLocaleDateString('en-US') : 'Seleccionar fecha de nacimiento'}</Text>
+                    <Text>Selecciona tu fecha de nacimiento</Text>
+                        <Text>{birthday ? birthday.toLocaleDateString('en-US') : 'Elegir fecha'}</Text>
                     </TouchableOpacity>
                     {showDatePicker && (
                         <DateTimePicker
@@ -215,10 +228,25 @@ const Signup = ({ navigation }: Props) => {
                     )}
                 </View>
                 <Button
-                    title='Registrarse'
-                    color={'blue'}
+                    title="Registrarse"
+                    filled
                     onPress={handleRegister}
+                    style={{ marginTop: 18, marginBottom: 4 }}
                 />
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('Login')}
+                    style={{
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: COLORS.white,
+                        paddingVertical: 12,
+                        borderRadius: 8,
+                        marginTop: 20,
+                    }}
+                >
+                    <Text style={{ fontSize: 16, color: COLORS.primary }}>Volver a login</Text>
+                </TouchableOpacity>
+
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
                     <Text style={{ color: messageColor }}>{message}</Text>
                 </View>
